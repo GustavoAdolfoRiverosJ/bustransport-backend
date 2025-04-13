@@ -5,6 +5,9 @@ import com.civa.bustransport.model.Bus;
 import com.civa.bustransport.service.IBusService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +24,18 @@ public class BusController {
     private final ModelMapper modelMapper;
 
     @GetMapping
-    public ResponseEntity<List<BusDTO>> findAll() throws Exception{
-        List<BusDTO> list = busService.findAll().stream().map(this::convertToDTO).toList();
+    public ResponseEntity<List<BusDTO>> findAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) throws Exception{
+        List<Bus> buses;
+        if (page != null && size != null) {
+            Pageable pageable = PageRequest.of(page, size, Sort.by("idBus").ascending());
+            buses = busService.findAllPaged(pageable).getContent();
+        } else {
+            buses = busService.findAll();
+        }
+        List<BusDTO> list = buses.stream().map(this::convertToDTO).toList();
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
